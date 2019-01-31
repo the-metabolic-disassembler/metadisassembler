@@ -56,4 +56,4 @@ An example notebook is available
 You can try it in Google Colab. |colab-logo|
 
 .. |colab-logo| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/githubthe-metabolic-disassembler/metadisassembler/blob/master/jupyter_usecase/basic_usage_in_colab.ipynb
+   :target: https://colab.research.google.com/github/the-metabolic-disassembler/metadisassembler/blob/master/jupyter_usecase/basic_usage_in_colab.ipynb
