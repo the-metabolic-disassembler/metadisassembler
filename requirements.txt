@@ -1,0 +1,5 @@
+CairoSVG==2.2.1
+matplotlib==3.0.2
+networkx==2.2
+pandas==0.23.4
+pillow==5.3.0

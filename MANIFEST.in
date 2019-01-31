@@ -1,0 +1,8 @@
+include README.md
+include README.rst
+include LICENSE
+include MANIFEST.in
+include requirements.txt
+include setup.py
+recursive-include metadisassembler *
+recursive-include metadisassembler/config *
