@@ -10,7 +10,7 @@ def main():
     setup(
         name="metadisassembler",
         version="0.0.1",
-        url="",
+        url="https://github.com/the-metabolic-disassembler/metadisassembler",
         author="Kohei Amano",
         author_email="amanok2167@gmail.com",
         maintainer="Masaaki Kotera",
