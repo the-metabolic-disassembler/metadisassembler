@@ -146,7 +146,7 @@ class Library:
     def input_from_kegg(self, cid, name=None):
         cpd = Compound()
         cpd.input_from_kegg(cid)
-        if self._append_cpd(cpd, name):
+        if self._append_cpd(cpd, name=cid):
             return True
         else:
             return False
@@ -154,7 +154,7 @@ class Library:
     def input_from_knapsack(self, cid, name=None):
         cpd = Compound()
         cpd.input_from_knapsack(cid)
-        if self._append_cpd(cpd, name):
+        if self._append_cpd(cpd, name=cid):
             return True
         else:
             return False
@@ -170,7 +170,8 @@ class Library:
     def input_molfile(self, molfile, name=None):
         cpd = Compound()
         cpd.input_molfile(molfile)
-        if self._append_cpd(cpd, name):
+        name = molfile.split("/")[-1].split(".")[0]
+        if self._append_cpd(cpd, name=name):
             return True
         else:
             return False
