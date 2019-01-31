@@ -1,6 +1,6 @@
 # The Metabolic Disassembler
 
-The Metabolic Disassembler is a Python package to automatically predict a combination of biosynthetic building blocks in a molecule. This software would help to reveal the basic metabolites constructing the target product.  
+The Metabolic Disassembler is a Python package to automatically predict a combination of biosynthetic building blocks in a metabolic compound. This software would help to reveal the basic metabolites constructing the target product.  
 
 
 ## Installation
