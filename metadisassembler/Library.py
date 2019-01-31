@@ -116,23 +116,6 @@ class Library:
 
         return True
 
-    def draw_cpds(self, ary, imagefile="./grid.png", shownum=False, molsPerRow=2, subImgSize=(400, 400)):
-        for cpd in self.cpds:
-            if not cpd.fit2d:
-                rdDepictor.Compute2DCoords(cpd.mol)
-                cpd.set_coordinates()
-                cpd.fit2d = True
-        if shownum:
-            ms1 = [Chem.MolFromMolBlock(
-                self.cpds[i].get_molblock(shownum=True)) for i in ary]
-        else:
-            ms1 = [self.cpds[i].mol for i in ary]
-        legends = [str(self.names[i]) for i in ary]
-        img = Draw.MolsToGridImage(
-            ms1, molsPerRow, subImgSize, legends=legends)
-        img.save(imagefile)
-        return True
-
     def info(self):
         df = pd.DataFrame(
             columns=["index", "#pa", "parents", "inchi", "#ch", "children"])
