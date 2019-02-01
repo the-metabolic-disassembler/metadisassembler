@@ -905,6 +905,19 @@ class MetaDisassembler(Library):
 
         return True
 
+    def output_matched_bb_mols(self, result_id=0):
+        combi = self.result[result_id]['target']
+        cpds = []
+        for frag in combi:
+            bb_idx = self.match_bb_idx[frag]
+            cpd = self.compact_bb_library.cpds[bb_idx]
+            cpds.append(cpd)
+
+        cpds = sorted(cpds, key=lambda x: x.n_atoms, reverse=True)
+        mols = [cpd.mol for cpd in cpds]
+
+        return mols
+
     ### -*- Disassemble -*- ###
 
     def disassemble(self):
