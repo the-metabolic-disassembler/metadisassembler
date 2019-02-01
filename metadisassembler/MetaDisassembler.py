@@ -38,7 +38,6 @@ class MetaDisassembler(Library):
         self.n_img = 20 # maximum number of output images
         self.output_folder = "./output" # save folder
         self.discriminate_same_compounds = True
-        self.requirement_of_modification = False
         self.match_bb_idx = {} # the index of a building block having matched a fragment
         self.highlight_bonds_in_each_fragment = {}
         self.color_info = {}
@@ -64,16 +63,13 @@ class MetaDisassembler(Library):
         elif re.search("^InChI", query):
             self.name = query.split("/")[1]
             self.input_inchi(query)
-            self.requirement_of_modification = True
         elif re.match("^C\d{8}$", query):
             self.name = query
             self.input_from_knapsack(query)
-            self.requirement_of_modification = True
         else:
             try:
                 self.input_smiles(query)
                 self.name = self.inchis[0].split("/")[1]
-                self.requirement_of_modification = True
             except:
                 print("Invalid query :-(")
                 return False
@@ -734,15 +730,10 @@ class MetaDisassembler(Library):
                                           "highlight_bonds": highlight_bonds}
 
         mol = self.cpds[0].mol
-        if self.requirement_of_modification:
-            rdDepictor.Compute2DCoords(mol)
-
         drawer = rdMolDraw2D.MolDraw2DSVG(params["fig_size"][0], params["fig_size"][1])
-
         mol = rdMolDraw2D.PrepareMolForDrawing(mol,
                                                addChiralHs=False,
                                                wedgeBonds=self.show_stereo)
-
         drawer.SetFontSize(params["fontsize"])
         option = drawer.drawOptions()
         option.additionalAtomLabelPadding = 0.1

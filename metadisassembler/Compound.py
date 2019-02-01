@@ -29,7 +29,7 @@ class Compound:
         self.fit2d = False
         self.graph = nx.Graph()
         self.mol = None
-        self.allsingle = False # turns all bonds to single bonds (default: False)
+        self.allsingle = False # turns all bonds to single bonds
 
     def _atom_block_line(self, a):
         line = "%10s%10s%10s" % (a[0], a[1], a[2])
@@ -180,6 +180,7 @@ class Compound:
             url = "http://www.genome.jp/dbget-bin/www_bget?-f+m+%s" % (cid)
             urllib.request.urlretrieve(url, "%s/%s.mol" % (kegg_dir, cid))
         self.input_molfile("%s/%s.mol" % (kegg_dir, cid))
+        self.fit2d = True
 
         return True
 
@@ -202,8 +203,8 @@ class Compound:
         Chem.MolToMolFile(mol, "./{}/{}.mol".format(knapsack_dir, cid))
 
         self.input_molfile("./{}/{}.mol".format(knapsack_dir, cid))
-        self.fit2d = True
-
+        self._compute_2d_coords()
+        
         return True
 
     def input_inchi(self, inchi):
