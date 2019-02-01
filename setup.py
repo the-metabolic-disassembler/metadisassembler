@@ -27,7 +27,7 @@ def main():
         classifiers=[
             "Development Status :: 4 - Beta",
             "License :: OSI Approved :: MIT License",
-            "Operating System :: MICROSOFT :: WINDOWS :: WINDOWS 10",
+            "Operating System :: Microsoft :: Windows :: Windows 10",
             "Operating System :: MacOS :: MacOS X",
             "Operating System :: POSIX :: Linux",
             "Programming Language :: Python :: 3.6",
