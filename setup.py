@@ -22,7 +22,7 @@ def main():
             "biosynthesis",
             "metabolic pathway",
             "natural product",
-            "cheminfomatics"
+            "cheminformatics"
         ],
         classifiers=[
             "Development Status :: 4 - Beta",
