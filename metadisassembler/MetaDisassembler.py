@@ -39,7 +39,7 @@ class MetaDisassembler(Library):
         self.output_folder = "./output" # save folder
         self.discriminate_same_compounds = True
         self.requirement_of_modification = False
-        self.match_bb_idx = {} # The index of a building block matched a fragment
+        self.match_bb_idx = {} # the index of a building block having matched a fragment
         self.highlight_bonds_in_each_fragment = {}
         self.color_info = {}
         self.regenerate = False
@@ -156,7 +156,7 @@ class MetaDisassembler(Library):
         return True
 
     def _generate_compact_library(self, ambiguous_rate=0.2):
-        with open(os.path.dirname(os.path.abspath(__file__)) + "/config/bb_library.pickle", "br") as f:
+        with open(os.path.dirname(os.path.abspath(__file__)) + "/data/bb_library.pickle", "br") as f:
             bb_library = pickle.load(f)
 
         for i in range(len(bb_library.inchis)):
