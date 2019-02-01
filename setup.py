@@ -18,12 +18,16 @@ def main():
         description="The Metabolic Disassembler",
         long_description=long_desc,
         license="MIT",
-        keywords="biosynthesis metabolic pathway",
+        keywords=[
+            "biosynthesis",
+            "metabolic pathway",
+            "natural product",
+            "cheminfomatics"
+        ],
         classifiers=[
             "Development Status :: 4 - Beta",
             "License :: OSI Approved :: MIT License",
             "Operating System :: MICROSOFT :: WINDOWS :: WINDOWS 10",
-            "Operating System :: MacOS :: MacOS X",
             "Operating System :: MacOS :: MacOS X",
             "Operating System :: POSIX :: Linux",
             "Programming Language :: Python :: 3.6",
