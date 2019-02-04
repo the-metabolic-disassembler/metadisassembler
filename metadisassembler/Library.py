@@ -120,56 +120,70 @@ class Library:
         df = pd.DataFrame(
             columns=["index", "#pa", "parents", "inchi", "#ch", "children"])
         for nodeidx in self.digraph.nodes():
-            df2 = pd.DataFrame([[nodeidx, len(self.parents(nodeidx)), self.parents(nodeidx), self.inchis[nodeidx],
-                                 len(self.children(nodeidx)), self.children(nodeidx)]], columns=df.columns)
+            df2 = pd.DataFrame([[
+                nodeidx,
+                len(list(self.digraph.predecessors(nodeidx))),
+                list(self.digraph.predecessors(nodeidx)),
+                self.inchis[nodeidx],
+                len(list(self.digraph.successors(nodeidx))),
+                list(self.digraph.successors(nodeidx))
+                ]],
+                columns=df.columns
+            )
+
             df = df.append(df2, ignore_index=True)
 
         return df
 
-    def input_from_kegg(self, cid, name=None):
+    def _input_from_kegg(self, cid, name=None):
         cpd = Compound()
-        cpd.input_from_kegg(cid)
-        if self._append_cpd(cpd, name=cid):
-            return True
-        else:
-            return False
-
-    def input_from_knapsack(self, cid, name=None):
-        cpd = Compound()
-        cpd.input_from_knapsack(cid)
-        if self._append_cpd(cpd, name=cid):
-            return True
-        else:
-            return False
-
-    def input_inchi(self, inchi, name=None):
-        cpd = Compound()
-        cpd.input_inchi(inchi)
-        if self._append_cpd(cpd, name):
-            return True
-        else:
-            return False
-
-    def input_molfile(self, molfile, name=None):
-        cpd = Compound()
-        cpd.input_molfile(molfile)
-        name = molfile.split("/")[-1].split(".")[0]
+        cpd._input_from_kegg(cid)
+        if not name:
+            name = cid
         if self._append_cpd(cpd, name=name):
             return True
         else:
             return False
 
-    def input_smiles(self, smiles, name=None):
+    def _input_from_knapsack(self, cid, name=None):
         cpd = Compound()
-        cpd.input_smiles(smiles)
+        cpd._input_from_knapsack(cid)
+        if not name:
+            name = cid
+        if self._append_cpd(cpd, name=name):
+            return True
+        else:
+            return False
+
+    def _input_inchi(self, inchi, name=None):
+        cpd = Compound()
+        cpd._input_inchi(inchi)
+        if self._append_cpd(cpd, name):
+            return True
+        else:
+            return False
+
+    def _input_molfile(self, molfile, name=None):
+        cpd = Compound()
+        cpd._input_molfile(molfile)
+        if not name:
+            name = molfile.split("/")[-1].split(".")[0]
+        if self._append_cpd(cpd, name=name):
+            return True
+        else:
+            return False
+
+    def _input_smiles(self, smiles, name=None):
+        cpd = Compound()
+        cpd._input_smiles(smiles)
         if self._append_cpd(cpd, name):
             return True
         else:
             return True
 
-    def input_rdkmol(self, mol, name=None):
+    def _input_rdkmol(self, mol, name=None):
         cpd = Compound()
-        cpd.input_rdkmol(mol)
+        cpd._input_rdkmol(mol)
         self._append_cpd(cpd, name)
 
         return True

@@ -166,11 +166,11 @@ class Compound:
 
         return True
 
-    def input_from_kegg(self, cid):
+    def _input_from_kegg(self, cid):
         """
         e.g., cid = "C00002"
         This method downloads a Molfile specified by cid (KEGG Compound ID) from KEGG database,
-        save it as ./kegg/cid.mol, and calls self.input_molfile to generate a Compound object.
+        save it as ./kegg/cid.mol, and calls self._input_molfile to generate a Compound object.
         If ./kegg/cid.mol already exists, this method does not download the same file again.
         """
         kegg_dir = "kegg"
@@ -179,16 +179,16 @@ class Compound:
         if not os.path.exists("%s/%s.mol" % (kegg_dir, cid)):
             url = "http://www.genome.jp/dbget-bin/www_bget?-f+m+%s" % (cid)
             urllib.request.urlretrieve(url, "%s/%s.mol" % (kegg_dir, cid))
-        self.input_molfile("%s/%s.mol" % (kegg_dir, cid))
+        self._input_molfile("%s/%s.mol" % (kegg_dir, cid))
         self.fit2d = True
 
         return True
 
-    def input_from_knapsack(self, cid):
+    def _input_from_knapsack(self, cid):
         """
         e.g., cid = "C00002657"
         This method downloads a Molfile specified by cid (KNApSAcK ID) from KNApSAcK 3D database,
-        save it as ./knapsack/cid.mol, and calls self.input_molfile to generate a Compound object.
+        save it as ./knapsack/cid.mol, and calls self._input_molfile to generate a Compound object.
         If ./knapsack/cid.mol already exists, this method does not download the same file again.
         The molfile from KNApSAcK contains 3D coordinates, so the 2D coordinates are recalculated.
         """
@@ -202,28 +202,28 @@ class Compound:
         mol = Chem.MolFromMolFile("./{}/{}.mol".format(knapsack_dir, cid))
         Chem.MolToMolFile(mol, "./{}/{}.mol".format(knapsack_dir, cid))
 
-        self.input_molfile("./{}/{}.mol".format(knapsack_dir, cid))
+        self._input_molfile("./{}/{}.mol".format(knapsack_dir, cid))
         self._compute_2d_coords()
-        
+
         return True
 
-    def input_inchi(self, inchi):
+    def _input_inchi(self, inchi):
         """
         inputs an InChI string to generate an RDKit mol,
-        which is passed to self.input_rdkmol() where a molblock is generated.
+        which is passed to self._input_rdkmol() where a molblock is generated.
         """
-        self.input_rdkmol(Chem.MolFromInchi(inchi))
+        self._input_rdkmol(Chem.MolFromInchi(inchi))
         return True
 
-    def input_smiles(self, smiles):
+    def _input_smiles(self, smiles):
         """
         inputs a SMILES string to generate an RDKit mol,
-        which is passed to self.input_rdkmol() where a molblock is generated.
+        which is passed to self._input_rdkmol() where a molblock is generated.
         """
-        self.input_rdkmol(Chem.MolFromSmiles(smiles))
+        self._input_rdkmol(Chem.MolFromSmiles(smiles))
         return True
 
-    def input_molfile(self, molfile):
+    def _input_molfile(self, molfile):
         """
         This method inputs the path to the Molfile (not the Molfile itself).
         The data in the Molfile is referred to as molblock.
@@ -258,7 +258,7 @@ class Compound:
 
         return True
 
-    def input_rdkmol(self, rdkmol):
+    def _input_rdkmol(self, rdkmol):
         """
         inputs an RDKit mol and generates a molblock.
         """
@@ -341,7 +341,7 @@ class Compound:
         """
         calculates the 2D coordinates, and set them to self by calling self._set_coordinates()
         This method is called if self.fit2d == False in
-        input_from_kegg, input_from_knapsack, input_inchi, input_rdkmol, and input_molfile.
+        _input_from_kegg, _input_from_knapsack, _input_inchi, _input_rdkmol, and _input_molfile.
         """
         AllChem.Compute2DCoords(self.mol)
         self._set_coordinates()

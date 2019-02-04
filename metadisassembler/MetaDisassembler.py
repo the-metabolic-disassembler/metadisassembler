@@ -53,22 +53,22 @@ class MetaDisassembler(Library):
     def input_query(self, query):
         if re.match("^C\d{5}$", query):
             self.name = query
-            self.input_from_kegg(query)
+            self._input_from_kegg(query)
         elif re.search(".mol$", query):
             name_tmp = query.replace(".mol", "")
             if re.search("/", name_tmp):
                 name_tmp = name_tmp.split("/")[-1]
             self.name = name_tmp
-            self.input_molfile(query)
+            self._input_molfile(query)
         elif re.search("^InChI", query):
             self.name = query.split("/")[1]
-            self.input_inchi(query)
+            self._input_inchi(query)
         elif re.match("^C\d{8}$", query):
             self.name = query
-            self.input_from_knapsack(query)
+            self._input_from_knapsack(query)
         else:
             try:
-                self.input_smiles(query)
+                self._input_smiles(query)
                 self.name = self.inchis[0].split("/")[1]
             except:
                 print("Invalid query :-(")
@@ -167,7 +167,7 @@ class MetaDisassembler(Library):
         for i, cpd in enumerate(bb_library.cpds):
             if self.cpds[0].mol.HasSubstructMatch(cpd.mol, useChirality=self.useChirality):
                 if Chem.MolToInchi(cpd.mol) not in compact_library.inchis:
-                    compact_library.input_rdkmol(cpd.mol, name=bb_library.names[i])
+                    compact_library._input_rdkmol(cpd.mol, name=bb_library.names[i])
                 continue
 
             if self.ambiguity:
@@ -177,7 +177,7 @@ class MetaDisassembler(Library):
                 if len(mcs.smartsString):
                     mcs_mol = Chem.MolFromSmarts(mcs.smartsString)
                     tmp_lib = Library()
-                    tmp_lib.input_rdkmol(mcs_mol)
+                    tmp_lib._input_rdkmol(mcs_mol)
                     if cpd.n_atoms == tmp_lib.cpds[0].n_atoms:
                         cnt = 0
                         for bond in tmp_lib.cpds[0].graph.edges(data=True):
@@ -186,11 +186,15 @@ class MetaDisassembler(Library):
                         if float(cnt / mcs_mol.GetNumBonds()) <= ambiguous_rate:
                             inchi = tmp_lib.inchis[0]
                             if inchi == "" or inchi not in compact_library.inchis:
-                                compact_library.input_rdkmol(mcs_mol, name=bb_library.names[i])
+                                compact_library._input_rdkmol(mcs_mol, name=bb_library.names[i])
+
+        cpd_name = {}
+        for i, cpd in enumerate(compact_library.cpds):
+            cpd_name[cpd] = compact_library.names[i]
 
         compact_library_sorted = Library()
         for i, cpd in enumerate(sorted(compact_library.cpds, key=lambda x: (x.n_atoms, x.n_bonds), reverse=True)):
-            compact_library_sorted.input_rdkmol(cpd.mol, name=compact_library.names[i])
+            compact_library_sorted._input_rdkmol(cpd.mol, name=cpd_name[cpd])
 
         self.compact_bb_library = compact_library_sorted
 
@@ -896,18 +900,29 @@ class MetaDisassembler(Library):
 
         return True
 
-    def output_matched_bb_mols(self, result_id=0):
+    def output_matched_bb(self, result_id=0):
         combi = self.result[result_id]['target']
-        cpds = []
+        bbs = []
         for frag in combi:
+            bb = []
             bb_idx = self.match_bb_idx[frag]
             cpd = self.compact_bb_library.cpds[bb_idx]
-            cpds.append(cpd)
+            bb_n_atom = cpd.n_atoms
+            bb_id = self.compact_bb_library.names[bb_idx]
+            bb = [bb_n_atom, cpd.mol, bb_id]
+            bbs.append(bb)
 
-        cpds = sorted(cpds, key=lambda x: x.n_atoms, reverse=True)
-        mols = [cpd.mol for cpd in cpds]
+        bbs = sorted(bbs, key=lambda x: x[0], reverse=True)
 
-        return mols
+        bb_info = []
+        for bb in bbs:
+            bb_info.append({
+                'mol': bb[1],
+                'bb_id': bb[2]
+                }
+            )
+
+        return bb_info
 
     ### -*- Disassemble -*- ###
 
