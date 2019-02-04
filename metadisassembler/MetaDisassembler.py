@@ -29,7 +29,6 @@ class MetaDisassembler(Library):
         super().__init__()
         self.useChirality = True # consideration of stereo
         self.history = [] # split history
-        self.inchi_bbname = {} # InChI : building block's names list
         self.compact_bb_library = Library() # compact building block library
         self.detected_preferential_bb = []
         self.seed_list = [] # combinations after one split
@@ -154,15 +153,7 @@ class MetaDisassembler(Library):
     def _generate_compact_library(self, ambiguous_rate=0.2):
         with open(os.path.dirname(os.path.abspath(__file__)) + "/data/bb_library.pickle", "br") as f:
             bb_library = pickle.load(f)
-
-        for i in range(len(bb_library.inchis)):
-            inchi = bb_library.inchis[i]
-            name = bb_library.names[i]
-            if inchi not in self.inchi_bbname.keys():
-                self.inchi_bbname[inchi] = [name]
-            else:
-                self.inchi_bbname[inchi].append(name)
-
+        
         compact_library = Library()
         for i, cpd in enumerate(bb_library.cpds):
             if self.cpds[0].mol.HasSubstructMatch(cpd.mol, useChirality=self.useChirality):
@@ -872,13 +863,7 @@ class MetaDisassembler(Library):
                 f.write("# fragments : " + str(len(x["target"])) + "\n")
                 f.write("Cut_bond_ID : " + str(x["cut_bond_id"]) + "\n")
                 for j, k in enumerate(x["target"]):
-                    try:
-                        f.write(str(j) + " : " + str(self.inchi_bbname[self.inchis[k]]) + "\n")
-                    except:
-                        try:
-                            f.write(str(j) + " : " + str(self.inchi_bbname[self.compact_bb_library.inchis[self.match_bb_idx[k]]]) + "\n")
-                        except:
-                            f.write(str(j) + " : " + str([self.compact_bb_library.names[self.match_bb_idx[k]]]) + "\n")
+                    f.write(str(j) + " : " + str(self.compact_bb_library.names[self.match_bb_idx[k]]) + "\n")
                 f.write("\n")
 
         f.write("END\n")
