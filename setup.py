@@ -9,7 +9,7 @@ with open("README.rst") as f:
 def main():
     setup(
         name="metadisassembler",
-        version="0.0.2",
+        version="0.0.3",
         url="https://github.com/the-metabolic-disassembler/metadisassembler",
         author="Kohei Amano",
         author_email="amanok2167@gmail.com",
@@ -25,7 +25,7 @@ def main():
             "cheminformatics"
         ],
         classifiers=[
-            "Development Status :: 4 - Beta",
+            "Development Status :: 5 - Production/Stable",
             "License :: OSI Approved :: MIT License",
             "Operating System :: Microsoft :: Windows :: Windows 10",
             "Operating System :: MacOS :: MacOS X",
