@@ -7,7 +7,6 @@ import math
 import pickle
 import datetime
 import argparse
-import multiprocessing
 from copy import deepcopy
 
 import rdkit
@@ -150,34 +149,51 @@ class MetaDisassembler(Library):
 
         return True
 
-    def _generate_compact_library(self, ambiguous_rate=0.2):
-        with open(os.path.dirname(os.path.abspath(__file__)) + "/data/bb_library.pickle", "br") as f:
+    def _generate_compact_library(self):
+        def return_bb_mol(bb_idx):
+            bb_mol = bb_library.cpds[bb_idx].mol
+            if self.cpds[0].mol.HasSubstructMatch(bb_mol, useChirality=self.useChirality):
+                return bb_mol
+            else:
+                return False
+
+        def return_mcs_mol(bb_idx, ambiguous_rate=0.2):
+            bb_mol = bb_library.cpds[bb_idx].mol
+            mcs = rdFMCS.FindMCS([self.cpds[0].mol, bb_mol],
+                                 bondCompare=rdFMCS.BondCompare.CompareAny)
+
+            if len(mcs.smartsString):
+                mcs_mol = Chem.MolFromSmarts(mcs.smartsString)
+                tmp_lib = Library()
+                tmp_lib._input_rdkmol(mcs_mol)
+                if bb_library.cpds[bb_idx].n_atoms == tmp_lib.cpds[0].n_atoms:
+                    cnt = 0
+                    for bond in tmp_lib.cpds[0].graph.edges(data=True):
+                        if int(bond[2]["row"][2]) >= 5:
+                            cnt += 1
+                    if float(cnt / mcs_mol.GetNumBonds()) <= ambiguous_rate:
+                        inchi = tmp_lib.inchis[0]
+                        if inchi == "" or inchi not in compact_library.inchis:
+                            return mcs_mol
+            else:
+                return False
+
+        with open(os.path.dirname(os.path.abspath(__file__)) +
+                  "/data/bb_library.pickle", "br") as f:
             bb_library = pickle.load(f)
-        
+
         compact_library = Library()
-        for i, cpd in enumerate(bb_library.cpds):
-            if self.cpds[0].mol.HasSubstructMatch(cpd.mol, useChirality=self.useChirality):
-                if Chem.MolToInchi(cpd.mol) not in compact_library.inchis:
-                    compact_library._input_rdkmol(cpd.mol, name=bb_library.names[i])
+        for i in range(len(bb_library.cpds)):
+            bb_mol = return_bb_mol(i)
+            if bb_mol:
+                compact_library._input_rdkmol(bb_mol, name=bb_library.names[i])
                 continue
 
             if self.ambiguity:
-                mcs = rdFMCS.FindMCS([self.cpds[0].mol, cpd.mol],
-                                     bondCompare=rdFMCS.BondCompare.CompareAny)
-
-                if len(mcs.smartsString):
-                    mcs_mol = Chem.MolFromSmarts(mcs.smartsString)
-                    tmp_lib = Library()
-                    tmp_lib._input_rdkmol(mcs_mol)
-                    if cpd.n_atoms == tmp_lib.cpds[0].n_atoms:
-                        cnt = 0
-                        for bond in tmp_lib.cpds[0].graph.edges(data=True):
-                            if int(bond[2]["row"][2]) >= 5:
-                                cnt += 1
-                        if float(cnt / mcs_mol.GetNumBonds()) <= ambiguous_rate:
-                            inchi = tmp_lib.inchis[0]
-                            if inchi == "" or inchi not in compact_library.inchis:
-                                compact_library._input_rdkmol(mcs_mol, name=bb_library.names[i])
+                mcs_mol = return_mcs_mol(i)
+                if mcs_mol:
+                    compact_library._input_rdkmol(mcs_mol, name=bb_library.names[i])
+                    continue
 
         cpd_name = {}
         for i, cpd in enumerate(compact_library.cpds):
