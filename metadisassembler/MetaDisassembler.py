@@ -932,21 +932,20 @@ class MetaDisassembler(Library):
 
         self._initialize()
 
-        if self._check_fragment_is_bb(0):
-            return True
+        if not self._check_fragment_is_bb(0):
+            self.seed_list = self._generate_seed()
 
-        self.seed_list = self._generate_seed()
+            if not self.seed_list:
+                print("No results.")
+                return False
 
-        if not self.seed_list:
-            print("No results.")
-            return False
+            self._optimize_seed()
 
-        self._optimize_seed()
+            if self.cpds[0].mol.HasSubstructMatch(Chem.MolFromSmiles("C=CO")):
+                self._remove_unnatural_carbon(valence=3)
 
-        if self.cpds[0].mol.HasSubstructMatch(Chem.MolFromSmiles("C=CO")):
-            self._remove_unnatural_carbon(valence=3)
+            self._sort_result()
 
-        self._sort_result()
         self._generate_img()
         self.runtime = round((datetime.datetime.now() - dt_start).total_seconds(), 2)
         self._output_txt()

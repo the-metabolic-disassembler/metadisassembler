@@ -9,7 +9,7 @@ with open("README.rst") as f:
 def main():
     setup(
         name="metadisassembler",
-        version="0.0.4",
+        version="0.0.5",
         url="https://github.com/the-metabolic-disassembler/metadisassembler",
         author="Kohei Amano",
         author_email="amanok2167@gmail.com",
