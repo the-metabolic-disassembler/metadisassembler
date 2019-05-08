@@ -43,7 +43,6 @@ class MetaDisassembler(Library):
         self.time_limit = 300 # set a time limit [s]
         self.show_stereo = True # show stereochemistry
         self.output_color = False # output color allocation information
-        self.pro = False # you never miss any combination (NOT RECOMMENDED)
 
 
     ### -*- Initial Settings -*- ###
@@ -130,11 +129,6 @@ class MetaDisassembler(Library):
                             action="store_true",
                             default=False,
                             help="output color allocation information [default: False]")
-        parser.add_argument("-p",
-                            "--pro",
-                            action="store_true",
-                            default=False,
-                            help="you never miss any combination (NOT RECOMMENDED). [default: False]")
 
         args = parser.parse_args()
 
@@ -145,7 +139,6 @@ class MetaDisassembler(Library):
         self.time_limit = args.time
         self.show_stereo = not(args.hide)
         self.output_color = args.color
-        self.pro = args.pro
 
         return True
 
@@ -292,40 +285,20 @@ class MetaDisassembler(Library):
         if not target_mol.HasSubstructMatch(query_mol, useChirality=self.useChirality):
             return False
 
-        if not self.pro:
-            boundary_bonds = []
-            scaffold_atom_ids = target_mol.GetSubstructMatch(query_mol, useChirality=self.useChirality)
-            for atom_idx in scaffold_atom_ids:
-                for bond in target_mol.GetAtomWithIdx(atom_idx).GetBonds():
-                    if bond.GetOtherAtomIdx(atom_idx) not in scaffold_atom_ids:
-                        boundary_bonds.append(bond.GetIdx())
+        boundary_bonds = []
+        scaffold_atom_ids = target_mol.GetSubstructMatch(query_mol, useChirality=self.useChirality)
+        for atom_idx in scaffold_atom_ids:
+            for bond in target_mol.GetAtomWithIdx(atom_idx).GetBonds():
+                if bond.GetOtherAtomIdx(atom_idx) not in scaffold_atom_ids:
+                    boundary_bonds.append(bond.GetIdx())
 
-            if not len(boundary_bonds):
-                return False
+        if not len(boundary_bonds):
+            return False
 
-            if self.cut_selected_bonds(target_id, boundary_bonds):
-                return True
-            else:
-                return False
-
+        if self.cut_selected_bonds(target_id, boundary_bonds):
+            return True
         else:
-            cond = False
-            scaffold_atom_id_list = target_mol.GetSubstructMatches(query_mol, useChirality=self.useChirality)
-            for scaffold_atom_ids in scaffold_atom_id_list:
-                boundary_bonds = []
-                for atom_idx in scaffold_atom_ids:
-                    for bond in target_mol.GetAtomWithIdx(atom_idx).GetBonds():
-                        if bond.GetOtherAtomIdx(atom_idx) not in scaffold_atom_ids:
-                            boundary_bonds.append(bond.GetIdx())
-
-                if len(boundary_bonds):
-                    self.cut_selected_bonds(target_id, boundary_bonds)
-                    cond = True
-
-            if cond:
-                return True
-            else:
-                return False
+            return False
 
     def _get_highlight_bonds(self, target_id, query_id):
         target_mol = self.cpds[target_id].mol
@@ -385,159 +358,97 @@ class MetaDisassembler(Library):
         dt_start = datetime.datetime.today()
         self._detect_pbu()
 
-        if not self.pro:
-            matched_bu = {0:{None}} # Matched BUs for each target
-            if not len(self.detected_pbu):
-                for i in range(len(self.query_specific_bul.cpds)):
-                    if i <= math.ceil(len(self.query_specific_bul.cpds) / 2) - 1:
-                        if self._divide_into_fragments(0, i):
-                            for k in self.history[-1]["target"]:
-                                if k not in matched_bu.keys():
-                                    matched_bu[k] = {i}
-                                else:
-                                    matched_bu[k].add(i)
-                conds = [True]
-                conds.extend([False for _ in range(len(self.cpds) - 1)])
-
-            else:
-                init = True
-                for j, x in enumerate(self.detected_pbu):
-                    for i in range(len(self.query_specific_bul.cpds)):
-                        if x[0] == self.query_specific_bul.inchis[i]:
-                            all_checked = False
-                            while not all_checked:
-                                if init:
-                                    if self._divide_into_fragments(0, i):
-                                        for k in self.history[-1]["target"]:
-                                            matched_bu[k] = {0}
-                                        conds = [True]
-                                        conds.extend([False for _ in range(len(self.cpds) - 1)])
-                                        init = False
-                                else:
-                                    for l, cpd in enumerate(self.cpds):
-                                        if not conds[l]:
-                                            if self._check_fragment_is_bu(l):
-                                                conds[l] = True
-
-                                            else:
-                                                len_pre = len(self.cpds)
-                                                if self._divide_into_fragments(l, i):
-                                                    conds[l] = True
-                                                    conds.extend([False for _ in range(len(self.cpds) - len_pre)])
-                                                    for k in self.history[-1]["target"]:
-                                                        if k not in matched_bu.keys():
-                                                            matched_bu[k] = {0}
-                                                        else:
-                                                            matched_bu[k].add(0)
-
-                                tmp = False
-                                cpd2 = self.query_specific_bul.cpds[i]
-                                for l, cpd in enumerate(self.cpds):
-                                    if not tmp and not conds[l]:
-                                        if len(cpd.mol.GetSubstructMatch(cpd2.mol, useChirality=self.useChirality)) == cpd.n_atoms:
-                                            tmp = True
-                                            break
-
-                                if not tmp:
-                                    all_checked = True
-
-                            break
-
-            limit_line = len(self.query_specific_bul.inchis) - 1
-            for i, cpd in enumerate(self.query_specific_bul.cpds):
-                if cpd.n_atoms == 1:
-                    limit_line = i
-                    break
-
-            while set(conds) != {True}:
-                for i, cpd in enumerate(self.cpds):
-                    dt_tmp = datetime.datetime.today()
-                    if (dt_tmp - dt_start).seconds >= self.time_limit:
-                        print("Over the time limit.")
-                        return False
-
-                    if not conds[i]:
-                        if self._check_fragment_is_bu(i):
-                            conds[i] = True
-                        else:
-                            cut_id = min(list(matched_bu[i]) + [limit_line])
-                            for j in range(len(self.query_specific_bul.cpds) - cut_id):
-                                len_pre = len(self.cpds)
-                                if self._divide_into_fragments(i, cut_id + j):
-                                    conds[i] = True
-                                    conds.extend([False for _ in range(len(self.cpds) - len_pre)])
-                                    for k in self.history[-1]["target"]:
-                                        if k not in matched_bu.keys():
-                                            matched_bu[k] = {cut_id + j}
-                                        else:
-                                            matched_bu[k].add(cut_id + j)
-
-            self.relation = self._generate_relation()
-            seed_list = [{"target":x["target"],
-                          "cut_bond_id":x["cut_bond_id"]} for x in self.relation if x["source"] == 0]
-
-            return seed_list
-
-        else:
-            matched_bu = {0:{None}} # Matched BU for each target
-            if not len(self.detected_pbu):
-                for i in range(len(self.query_specific_bul.cpds)):
-                    pre_len_his = len(self.history)
+        matched_bu = {0:{None}} # Matched BUs for each target
+        if not len(self.detected_pbu):
+            for i in range(len(self.query_specific_bul.cpds)):
+                if i <= math.ceil(len(self.query_specific_bul.cpds) / 2) - 1:
                     if self._divide_into_fragments(0, i):
-                        for j in range(pre_len_his, len(self.history)):
-                            for k in self.history[j]["target"]:
-                                if k not in matched_bu.keys():
-                                    matched_bu[k] = {i}
-                                else:
-                                    matched_bu[k].add(i)
-
-            else:
-                for i in range(len(self.query_specific_bul.cpds)):
-                    if self.detected_pbu[0][0] == self.query_specific_bul.inchis[i]:
-                        if self._divide_into_fragments(0, i):
-                            for k in self.history[-1]["target"]:
+                        for k in self.history[-1]["target"]:
+                            if k not in matched_bu.keys():
                                 matched_bu[k] = {i}
-                            break
-
+                            else:
+                                matched_bu[k].add(i)
             conds = [True]
             conds.extend([False for _ in range(len(self.cpds) - 1)])
 
-            for i, cpd in enumerate(self.query_specific_bul.cpds):
-                if cpd.n_atoms == 1:
-                    limit_line = i
-                    break
+        else:
+            init = True
+            for j, x in enumerate(self.detected_pbu):
+                for i in range(len(self.query_specific_bul.cpds)):
+                    if x[0] == self.query_specific_bul.inchis[i]:
+                        all_checked = False
+                        while not all_checked:
+                            if init:
+                                if self._divide_into_fragments(0, i):
+                                    for k in self.history[-1]["target"]:
+                                        matched_bu[k] = {0}
+                                    conds = [True]
+                                    conds.extend([False for _ in range(len(self.cpds) - 1)])
+                                    init = False
+                            else:
+                                for l, cpd in enumerate(self.cpds):
+                                    if not conds[l]:
+                                        if self._check_fragment_is_bu(l):
+                                            conds[l] = True
 
-            while set(conds) != {True}:
-                for i, cpd in enumerate(self.cpds):
-                    dt_tmp = datetime.datetime.today()
-                    if (dt_tmp - dt_start).seconds >= self.time_limit:
-                        print("Over the time limit.")
-                        return False
+                                        else:
+                                            len_pre = len(self.cpds)
+                                            if self._divide_into_fragments(l, i):
+                                                conds[l] = True
+                                                conds.extend([False for _ in range(len(self.cpds) - len_pre)])
+                                                for k in self.history[-1]["target"]:
+                                                    if k not in matched_bu.keys():
+                                                        matched_bu[k] = {0}
+                                                    else:
+                                                        matched_bu[k].add(0)
 
-                    if not conds[i]:
-                        if self._check_fragment_is_bu(i):
-                            conds[i] = True
-                        else:
-                            cut_id = min(list(matched_bu[i])+[limit_line])
-                            for j in range(len(self.query_specific_bul.cpds) - cut_id):
-                                pre_len_cpds = len(self.cpds)
-                                pre_len_his = len(self.history)
-                                if self._divide_into_fragments(i, cut_id + j):
-                                    conds[i] = True
-                                    conds.extend([False for _ in range(len(self.cpds) - pre_len_cpds)])
+                            tmp = False
+                            cpd2 = self.query_specific_bul.cpds[i]
+                            for l, cpd in enumerate(self.cpds):
+                                if not tmp and not conds[l]:
+                                    if len(cpd.mol.GetSubstructMatch(cpd2.mol, useChirality=self.useChirality)) == cpd.n_atoms:
+                                        tmp = True
+                                        break
 
-                                    for l in range(pre_len_his, len(self.history)):
-                                        for k in self.history[l]["target"]:
-                                            if k not in matched_bu.keys():
-                                                matched_bu[k] = {cut_id + j}
-                                            else:
-                                                matched_bu[k].add(cut_id + j)
+                            if not tmp:
+                                all_checked = True
 
-            self.relation = self._generate_relation()
-            seed_list = [{"target":x["target"],
-                          "cut_bond_id":x["cut_bond_id"]} for x in self.relation if x["source"] == 0]
+                        break
 
-            return seed_list
+        limit_line = len(self.query_specific_bul.inchis) - 1
+        for i, cpd in enumerate(self.query_specific_bul.cpds):
+            if cpd.n_atoms == 1:
+                limit_line = i
+                break
+
+        while set(conds) != {True}:
+            for i, cpd in enumerate(self.cpds):
+                dt_tmp = datetime.datetime.today()
+                if (dt_tmp - dt_start).seconds >= self.time_limit:
+                    print("Over the time limit.")
+                    return False
+
+                if not conds[i]:
+                    if self._check_fragment_is_bu(i):
+                        conds[i] = True
+                    else:
+                        cut_id = min(list(matched_bu[i]) + [limit_line])
+                        for j in range(len(self.query_specific_bul.cpds) - cut_id):
+                            len_pre = len(self.cpds)
+                            if self._divide_into_fragments(i, cut_id + j):
+                                conds[i] = True
+                                conds.extend([False for _ in range(len(self.cpds) - len_pre)])
+                                for k in self.history[-1]["target"]:
+                                    if k not in matched_bu.keys():
+                                        matched_bu[k] = {cut_id + j}
+                                    else:
+                                        matched_bu[k].add(cut_id + j)
+
+        self.relation = self._generate_relation()
+        seed_list = [{"target":x["target"],
+                      "cut_bond_id":x["cut_bond_id"]} for x in self.relation if x["source"] == 0]
+
+        return seed_list
 
     def _optimize_seed(self):
         dt_start = datetime.datetime.today()

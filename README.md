@@ -2,12 +2,12 @@
 
 The Metabolic Disassembler is a Python package to automatically predict a combination of biosynthetic units in a natural product. This software would help to reveal the starting materials of the target natural product.  
 
-  
+
 ## Basic Usage
 A usage example by Jupyter Notebook can be seen [here](https://github.com/the-metabolic-disassembler/metadisassembler/blob/master/jupyter_usecase/basic_usage.ipynb).   
 
 <a href="https://github.com/the-metabolic-disassembler/metadisassembler/blob/master/jupyter_usecase/basic_usage.ipynb"><img src="https://raw.githubusercontent.com/the-metabolic-disassembler/metadisassembler/master/jupyter_usecase/jupyter01.png" width="400"></a>
-   
+
 
 ## Command Line Usage
 
@@ -24,8 +24,6 @@ optional arguments:
   -t TIME, --time TIME  set a time limit [s] [default: 300]
   --hide                hide stereochemistry [default: False]
   -c, --color           output color allocation information [default: False]
-  -p, --pro             you never miss any combination (NOT RECOMMENDED).
-                        [default: False]
 ```
 
 ## Requirements
@@ -37,11 +35,11 @@ optional arguments:
   - [Pillow (PIL)](https://pillow.readthedocs.io/en/stable/)
   - [Pandas](https://pandas.pydata.org)
   - [Matplotlib](https://matplotlib.org)
-  
+
 ## Installation
 
 Install The Metabolic Disassembler with `pip`.  
-  
+
 ```bash
 $ pip install metadisassembler
 ```
