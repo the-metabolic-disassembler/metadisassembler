@@ -1,6 +1,6 @@
 # The Metabolic Disassembler
 
-The Metabolic Disassembler is a Python package to automatically predict a combination of biosynthetic building blocks in a metabolic compound. This software would help to reveal the basic metabolites constructing the target product.  
+The Metabolic Disassembler is a Python package to automatically predict a combination of biosynthetic units in a natural product. This software would help to reveal the starting materials of the target natural product.  
 
 
 ## Installation
@@ -14,9 +14,9 @@ $ pip install metadisassembler
 ## Requirements
 
 - Python (3.6)
-  - [RDKit](https://www.rdkit.org)
-  - [NetworkX](https://networkx.github.io/documentation/stable/)
-  - [CairoSVG](https://cairosvg.org)
+  - [RDKit](https://www.rdkit.org)(version 2018.09.1.0)
+  - [NetworkX](https://networkx.github.io/documentation/stable/)(version 2.2)
+  - [CairoSVG](https://cairosvg.org)(version 2.2.1)
   - [Pillow (PIL)](https://pillow.readthedocs.io/en/stable/)
   - [Pandas](https://pandas.pydata.org)
   - [Matplotlib](https://matplotlib.org)
