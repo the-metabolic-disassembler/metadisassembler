@@ -28,15 +28,15 @@ class MetaDisassembler(Library):
         super().__init__()
         self.useChirality = True # consideration of stereo
         self.history = [] # split history
-        self.compact_bb_library = Library() # compact building block library
-        self.detected_preferential_bb = []
+        self.query_specific_bul = Library() # query-specific BUL
+        self.detected_pbu = []
         self.seed_list = [] # combinations after one split
         self.relation = [] # fragment to fragments relationship
         self.result = []
         self.n_img = 20 # maximum number of output images
         self.output_folder = "./output" # save folder
         self.discriminate_same_compounds = True
-        self.match_bb_idx = {} # the index of a building block having matched a fragment
+        self.match_bu_idx = {} # the index of a building unit having matched a fragment
         self.highlight_bonds_in_each_fragment = {}
         self.color_info = {}
         self.regenerate = False
@@ -81,7 +81,7 @@ class MetaDisassembler(Library):
     def _initialize(self):
         self._setup_frag_limit()
         self._count_n_aromatic_bonds()
-        self._generate_compact_library()
+        self._generate_query_specific_bul()
 
         return True
 
@@ -149,68 +149,68 @@ class MetaDisassembler(Library):
 
         return True
 
-    def _generate_compact_library(self):
-        def return_bb_mol(bb_idx):
-            bb_mol = bb_library.cpds[bb_idx].mol
-            if self.cpds[0].mol.HasSubstructMatch(bb_mol, useChirality=self.useChirality):
-                return bb_mol
+    def _generate_query_specific_bul(self):
+        def return_bu_mol(bu_idx):
+            bu_mol = bul.cpds[bu_idx].mol
+            if self.cpds[0].mol.HasSubstructMatch(bu_mol, useChirality=self.useChirality):
+                return bu_mol
             else:
                 return False
 
-        def return_mcs_mol(bb_idx, ambiguous_rate=0.2):
-            bb_mol = bb_library.cpds[bb_idx].mol
-            mcs = rdFMCS.FindMCS([self.cpds[0].mol, bb_mol],
+        def return_mcs_mol(bu_idx, ambiguous_rate=0.2):
+            bu_mol = bul.cpds[bu_idx].mol
+            mcs = rdFMCS.FindMCS([self.cpds[0].mol, bu_mol],
                                  bondCompare=rdFMCS.BondCompare.CompareAny)
 
             if len(mcs.smartsString):
                 mcs_mol = Chem.MolFromSmarts(mcs.smartsString)
                 tmp_lib = Library()
                 tmp_lib._input_rdkmol(mcs_mol)
-                if bb_library.cpds[bb_idx].n_atoms == tmp_lib.cpds[0].n_atoms:
+                if bul.cpds[bu_idx].n_atoms == tmp_lib.cpds[0].n_atoms:
                     cnt = 0
                     for bond in tmp_lib.cpds[0].graph.edges(data=True):
                         if int(bond[2]["row"][2]) >= 5:
                             cnt += 1
                     if float(cnt / mcs_mol.GetNumBonds()) <= ambiguous_rate:
                         inchi = tmp_lib.inchis[0]
-                        if inchi == "" or inchi not in compact_library.inchis:
+                        if inchi == "" or inchi not in query_specific_bul.inchis:
                             return mcs_mol
             else:
                 return False
 
         with open(os.path.dirname(os.path.abspath(__file__)) +
-                  "/data/bb_library.pickle", "br") as f:
-            bb_library = pickle.load(f)
+                  "/data/bul.pickle", "br") as f:
+            bul = pickle.load(f)
 
-        compact_library = Library()
-        for i in range(len(bb_library.cpds)):
-            bb_mol = return_bb_mol(i)
-            if bb_mol:
-                compact_library._input_rdkmol(bb_mol, name=bb_library.names[i])
+        query_specific_bul = Library()
+        for i in range(len(bul.cpds)):
+            bu_mol = return_bu_mol(i)
+            if bu_mol:
+                query_specific_bul._input_rdkmol(bu_mol, name=bul.names[i])
                 continue
 
             if self.ambiguity:
                 mcs_mol = return_mcs_mol(i)
                 if mcs_mol:
-                    compact_library._input_rdkmol(mcs_mol, name=bb_library.names[i])
+                    query_specific_bul._input_rdkmol(mcs_mol, name=bul.names[i])
                     continue
 
         cpd_name = {}
-        for i, cpd in enumerate(compact_library.cpds):
-            cpd_name[cpd] = compact_library.names[i]
+        for i, cpd in enumerate(query_specific_bul.cpds):
+            cpd_name[cpd] = query_specific_bul.names[i]
 
-        compact_library_sorted = Library()
-        for i, cpd in enumerate(sorted(compact_library.cpds, key=lambda x: (x.n_atoms, x.n_bonds), reverse=True)):
-            compact_library_sorted._input_rdkmol(cpd.mol, name=cpd_name[cpd])
+        query_specific_bul_sorted = Library()
+        for i, cpd in enumerate(sorted(query_specific_bul.cpds, key=lambda x: (x.n_atoms, x.n_bonds), reverse=True)):
+            query_specific_bul_sorted._input_rdkmol(cpd.mol, name=cpd_name[cpd])
 
-        self.compact_bb_library = compact_library_sorted
+        self.query_specific_bul = query_specific_bul_sorted
 
         return True
 
     ### -*- Combinatorial Optimization -*- ###
 
-    def _detect_preferential_bb(self):
-        preferential_bb = {
+    def _detect_pbu(self):
+        pbu = {
             "Shikimic acid": "InChI=1S/C7H10O5/c8-4-1-3(7(11)12)2-5(9)6(4)10/h1,4-6,8-10H,2H2,(H,11,12)/t4-,5-,6-/m1/s1",
             "Betalamic acid": "InChI=1S/C9H11NO4/c1-2-5-3-6(8(11)12)10-7(4-5)9(13)14/h2-3,7,10H,4H2,1H3,(H,11,12)(H,13,14)/b5-2-/t7-/m0/s1",
             "D-Glucose": "InChI=1S/C6H12O5/c7-1-4-6(10)5(9)3(8)2-11-4/h3-10H,1-2H2/t3-,4+,5+,6+/m0/s1",
@@ -220,21 +220,21 @@ class MetaDisassembler(Library):
             "L-Rhamnose": "InChI=1S/C6H12O4/c1-3-5(8)6(9)4(7)2-10-3/h3-9H,2H2,1H3/t3-,4-,5-,6-/m0/s1",
             }
 
-        for i, inchi in enumerate(self.compact_bb_library.inchis):
-            if inchi in preferential_bb.values():
-                self.detected_preferential_bb.append([inchi, self.compact_bb_library.cpds[i].n_atoms])
+        for i, inchi in enumerate(self.query_specific_bul.inchis):
+            if inchi in pbu.values():
+                self.detected_pbu.append([inchi, self.query_specific_bul.cpds[i].n_atoms])
 
-        if len(self.detected_preferential_bb):
-            self.detected_preferential_bb = sorted(self.detected_preferential_bb, key=lambda x: x[1], reverse=True)
+        if len(self.detected_pbu):
+            self.detected_pbu = sorted(self.detected_pbu, key=lambda x: x[1], reverse=True)
             return True
         else:
             return False
 
-    def _check_fragment_is_bb(self, target_id):
-        for i, cpd in enumerate(self.compact_bb_library.cpds):
+    def _check_fragment_is_bu(self, target_id):
+        for i, cpd in enumerate(self.query_specific_bul.cpds):
             if len(self.cpds[target_id].mol.GetSubstructMatch(cpd.mol, useChirality=self.useChirality)) == self.cpds[target_id].n_atoms:
                 self._get_highlight_bonds(target_id, i)
-                self.match_bb_idx[target_id] = i
+                self.match_bu_idx[target_id] = i
                 if target_id == 0:
                     self.result.append({"target": [0], "cut_bond_id": []})
 
@@ -287,7 +287,7 @@ class MetaDisassembler(Library):
 
     def _divide_into_fragments(self, target_id, query_id):
         target_mol = self.cpds[target_id].mol
-        query_mol = self.compact_bb_library.cpds[query_id].mol
+        query_mol = self.query_specific_bul.cpds[query_id].mol
 
         if not target_mol.HasSubstructMatch(query_mol, useChirality=self.useChirality):
             return False
@@ -329,14 +329,14 @@ class MetaDisassembler(Library):
 
     def _get_highlight_bonds(self, target_id, query_id):
         target_mol = self.cpds[target_id].mol
-        bb_mol = self.compact_bb_library.cpds[query_id].mol
-        atom_idx_target = target_mol.GetSubstructMatch(bb_mol)
-        atom_idx_bb = bb_mol.GetSubstructMatch(bb_mol)
+        bu_mol = self.query_specific_bul.cpds[query_id].mol
+        atom_idx_target = target_mol.GetSubstructMatch(bu_mol)
+        atom_idx_bu = bu_mol.GetSubstructMatch(bu_mol)
 
-        atom_idx_relation = {idx:atom_idx_target[i] for i, idx in enumerate(atom_idx_bb)}
+        atom_idx_relation = {idx:atom_idx_target[i] for i, idx in enumerate(atom_idx_bu)}
         match_bonds = []
 
-        for edge in self.compact_bb_library.cpds[query_id].graph.edges():
+        for edge in self.query_specific_bul.cpds[query_id].graph.edges():
             a1 = atom_idx_relation[edge[0]]
             a2 = atom_idx_relation[edge[1]]
             a1_orig = int(self.cpds[target_id].graph.nodes[a1]["row"][12]) - 1
@@ -383,40 +383,40 @@ class MetaDisassembler(Library):
 
     def _generate_seed(self):
         dt_start = datetime.datetime.today()
-        self._detect_preferential_bb()
+        self._detect_pbu()
 
         if not self.pro:
-            matched_bb = {0:{None}} # Matched Building blocks for each target
-            if not len(self.detected_preferential_bb):
-                for i in range(len(self.compact_bb_library.cpds)):
-                    if i <= math.ceil(len(self.compact_bb_library.cpds) / 2) - 1:
+            matched_bu = {0:{None}} # Matched BUs for each target
+            if not len(self.detected_pbu):
+                for i in range(len(self.query_specific_bul.cpds)):
+                    if i <= math.ceil(len(self.query_specific_bul.cpds) / 2) - 1:
                         if self._divide_into_fragments(0, i):
                             for k in self.history[-1]["target"]:
-                                if k not in matched_bb.keys():
-                                    matched_bb[k] = {i}
+                                if k not in matched_bu.keys():
+                                    matched_bu[k] = {i}
                                 else:
-                                    matched_bb[k].add(i)
+                                    matched_bu[k].add(i)
                 conds = [True]
                 conds.extend([False for _ in range(len(self.cpds) - 1)])
 
             else:
                 init = True
-                for j, x in enumerate(self.detected_preferential_bb):
-                    for i in range(len(self.compact_bb_library.cpds)):
-                        if x[0] == self.compact_bb_library.inchis[i]:
+                for j, x in enumerate(self.detected_pbu):
+                    for i in range(len(self.query_specific_bul.cpds)):
+                        if x[0] == self.query_specific_bul.inchis[i]:
                             all_checked = False
                             while not all_checked:
                                 if init:
                                     if self._divide_into_fragments(0, i):
                                         for k in self.history[-1]["target"]:
-                                            matched_bb[k] = {0}
+                                            matched_bu[k] = {0}
                                         conds = [True]
                                         conds.extend([False for _ in range(len(self.cpds) - 1)])
                                         init = False
                                 else:
                                     for l, cpd in enumerate(self.cpds):
                                         if not conds[l]:
-                                            if self._check_fragment_is_bb(l):
+                                            if self._check_fragment_is_bu(l):
                                                 conds[l] = True
 
                                             else:
@@ -425,13 +425,13 @@ class MetaDisassembler(Library):
                                                     conds[l] = True
                                                     conds.extend([False for _ in range(len(self.cpds) - len_pre)])
                                                     for k in self.history[-1]["target"]:
-                                                        if k not in matched_bb.keys():
-                                                            matched_bb[k] = {0}
+                                                        if k not in matched_bu.keys():
+                                                            matched_bu[k] = {0}
                                                         else:
-                                                            matched_bb[k].add(0)
+                                                            matched_bu[k].add(0)
 
                                 tmp = False
-                                cpd2 = self.compact_bb_library.cpds[i]
+                                cpd2 = self.query_specific_bul.cpds[i]
                                 for l, cpd in enumerate(self.cpds):
                                     if not tmp and not conds[l]:
                                         if len(cpd.mol.GetSubstructMatch(cpd2.mol, useChirality=self.useChirality)) == cpd.n_atoms:
@@ -443,8 +443,8 @@ class MetaDisassembler(Library):
 
                             break
 
-            limit_line = len(self.compact_bb_library.inchis) - 1
-            for i, cpd in enumerate(self.compact_bb_library.cpds):
+            limit_line = len(self.query_specific_bul.inchis) - 1
+            for i, cpd in enumerate(self.query_specific_bul.cpds):
                 if cpd.n_atoms == 1:
                     limit_line = i
                     break
@@ -457,20 +457,20 @@ class MetaDisassembler(Library):
                         return False
 
                     if not conds[i]:
-                        if self._check_fragment_is_bb(i):
+                        if self._check_fragment_is_bu(i):
                             conds[i] = True
                         else:
-                            cut_id = min(list(matched_bb[i]) + [limit_line])
-                            for j in range(len(self.compact_bb_library.cpds) - cut_id):
+                            cut_id = min(list(matched_bu[i]) + [limit_line])
+                            for j in range(len(self.query_specific_bul.cpds) - cut_id):
                                 len_pre = len(self.cpds)
                                 if self._divide_into_fragments(i, cut_id + j):
                                     conds[i] = True
                                     conds.extend([False for _ in range(len(self.cpds) - len_pre)])
                                     for k in self.history[-1]["target"]:
-                                        if k not in matched_bb.keys():
-                                            matched_bb[k] = {cut_id + j}
+                                        if k not in matched_bu.keys():
+                                            matched_bu[k] = {cut_id + j}
                                         else:
-                                            matched_bb[k].add(cut_id + j)
+                                            matched_bu[k].add(cut_id + j)
 
             self.relation = self._generate_relation()
             seed_list = [{"target":x["target"],
@@ -479,30 +479,30 @@ class MetaDisassembler(Library):
             return seed_list
 
         else:
-            matched_bb = {0:{None}} # Matched Building blocks for each target
-            if not len(self.detected_preferential_bb):
-                for i in range(len(self.compact_bb_library.cpds)):
+            matched_bu = {0:{None}} # Matched BU for each target
+            if not len(self.detected_pbu):
+                for i in range(len(self.query_specific_bul.cpds)):
                     pre_len_his = len(self.history)
                     if self._divide_into_fragments(0, i):
                         for j in range(pre_len_his, len(self.history)):
                             for k in self.history[j]["target"]:
-                                if k not in matched_bb.keys():
-                                    matched_bb[k] = {i}
+                                if k not in matched_bu.keys():
+                                    matched_bu[k] = {i}
                                 else:
-                                    matched_bb[k].add(i)
+                                    matched_bu[k].add(i)
 
             else:
-                for i in range(len(self.compact_bb_library.cpds)):
-                    if self.detected_preferential_bb[0][0] == self.compact_bb_library.inchis[i]:
+                for i in range(len(self.query_specific_bul.cpds)):
+                    if self.detected_pbu[0][0] == self.query_specific_bul.inchis[i]:
                         if self._divide_into_fragments(0, i):
                             for k in self.history[-1]["target"]:
-                                matched_bb[k] = {i}
+                                matched_bu[k] = {i}
                             break
 
             conds = [True]
             conds.extend([False for _ in range(len(self.cpds) - 1)])
 
-            for i, cpd in enumerate(self.compact_bb_library.cpds):
+            for i, cpd in enumerate(self.query_specific_bul.cpds):
                 if cpd.n_atoms == 1:
                     limit_line = i
                     break
@@ -515,11 +515,11 @@ class MetaDisassembler(Library):
                         return False
 
                     if not conds[i]:
-                        if self._check_fragment_is_bb(i):
+                        if self._check_fragment_is_bu(i):
                             conds[i] = True
                         else:
-                            cut_id = min(list(matched_bb[i])+[limit_line])
-                            for j in range(len(self.compact_bb_library.cpds) - cut_id):
+                            cut_id = min(list(matched_bu[i])+[limit_line])
+                            for j in range(len(self.query_specific_bul.cpds) - cut_id):
                                 pre_len_cpds = len(self.cpds)
                                 pre_len_his = len(self.history)
                                 if self._divide_into_fragments(i, cut_id + j):
@@ -528,10 +528,10 @@ class MetaDisassembler(Library):
 
                                     for l in range(pre_len_his, len(self.history)):
                                         for k in self.history[l]["target"]:
-                                            if k not in matched_bb.keys():
-                                                matched_bb[k] = {cut_id + j}
+                                            if k not in matched_bu.keys():
+                                                matched_bu[k] = {cut_id + j}
                                             else:
-                                                matched_bb[k].add(cut_id + j)
+                                                matched_bu[k].add(cut_id + j)
 
             self.relation = self._generate_relation()
             seed_list = [{"target":x["target"],
@@ -879,7 +879,7 @@ class MetaDisassembler(Library):
                 f.write("# fragments : " + str(len(x["target"])) + "\n")
                 f.write("Cut_bond_ID : " + str(x["cut_bond_id"]) + "\n")
                 for j, k in enumerate(x["target"]):
-                    f.write(str(j) + " : " + str(self.compact_bb_library.names[self.match_bb_idx[k]]) + "\n")
+                    f.write(str(j) + " : " + str(self.query_specific_bul.names[self.match_bu_idx[k]]) + "\n")
                 f.write("\n")
 
         f.write("END\n")
@@ -901,29 +901,29 @@ class MetaDisassembler(Library):
 
         return True
 
-    def output_matched_bb(self, result_id=0):
+    def output_matched_bu(self, result_id=0):
         combi = self.result[result_id]['target']
-        bbs = []
+        bus = []
         for frag in combi:
-            bb = []
-            bb_idx = self.match_bb_idx[frag]
-            cpd = self.compact_bb_library.cpds[bb_idx]
-            bb_n_atom = cpd.n_atoms
-            bb_id = self.compact_bb_library.names[bb_idx]
-            bb = [bb_n_atom, cpd.mol, bb_id]
-            bbs.append(bb)
+            bu = []
+            bu_idx = self.match_bu_idx[frag]
+            cpd = self.query_specific_bul.cpds[bu_idx]
+            bu_n_atom = cpd.n_atoms
+            bu_id = self.query_specific_bul.names[bu_idx]
+            bu = [bu_n_atom, cpd.mol, bu_id]
+            bus.append(bu)
 
-        bbs = sorted(bbs, key=lambda x: x[0], reverse=True)
+        bus = sorted(bus, key=lambda x: x[0], reverse=True)
 
-        bb_info = []
-        for bb in bbs:
-            bb_info.append({
-                'mol': bb[1],
-                'bb_id': bb[2]
+        bu_info = []
+        for bu in bus:
+            bu_info.append({
+                'mol': bu[1],
+                'bu_id': bu[2]
                 }
             )
 
-        return bb_info
+        return bu_info
 
     ### -*- Disassemble -*- ###
 
@@ -932,7 +932,7 @@ class MetaDisassembler(Library):
 
         self._initialize()
 
-        if not self._check_fragment_is_bb(0):
+        if not self._check_fragment_is_bu(0):
             self.seed_list = self._generate_seed()
 
             if not self.seed_list:
