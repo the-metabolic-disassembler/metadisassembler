@@ -50,4 +50,4 @@ $ pip install metadisassembler
 
 You can try the process from installation to the basic usage in Google Colab. [![colab-logo](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/the-metabolic-disassembler/metadisassembler/blob/master/jupyter_usecase/basic_usage_in_colab.ipynb)
 
-<img src="https://raw.githubusercontent.com/the-metabolic-disassembler/metadisassembler/master/jupyter_usecase/colab01.png" width="400">
+<a href="https://colab.research.google.com/github/the-metabolic-disassembler/metadisassembler/blob/master/jupyter_usecase/basic_usage_in_colab.ipynb"><img src="https://raw.githubusercontent.com/the-metabolic-disassembler/metadisassembler/master/jupyter_usecase/colab01.png" width="400"></a>
