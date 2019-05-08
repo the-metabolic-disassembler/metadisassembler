@@ -46,4 +46,6 @@ Install The Metabolic Disassembler with `pip`.
 $ pip install metadisassembler
 ```
 
+## Google Colab
+
 You can try it in Google Colab. [![colab-logo](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/the-metabolic-disassembler/metadisassembler/blob/master/jupyter_usecase/basic_usage_in_colab.ipynb)
