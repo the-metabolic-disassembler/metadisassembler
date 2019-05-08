@@ -5,6 +5,8 @@ The Metabolic Disassembler is a Python package to automatically predict a combin
   
 ## Basic Usage
 A usage example by Jupyter Notebook can be seen [here](https://github.com/the-metabolic-disassembler/metadisassembler/blob/master/jupyter_usecase/basic_usage.ipynb).   
+
+<img src="https://raw.githubusercontent.com/the-metabolic-disassembler/metadisassembler/master/jupyter_usecase/jupyter01.png">
    
 
 ## Command Line Usage
