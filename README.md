@@ -14,9 +14,9 @@ $ pip install metadisassembler
 ## Requirements
 
 - Python (3.6)
-  - [RDKit](https://www.rdkit.org)(version 2018.09.1.0)
-  - [NetworkX](https://networkx.github.io/documentation/stable/)(version 2.2)
-  - [CairoSVG](https://cairosvg.org)(version 2.2.1)
+  - [RDKit](https://www.rdkit.org) (version 2018.09.1.0)
+  - [NetworkX](https://networkx.github.io/documentation/stable/) (version 2.2)
+  - [CairoSVG](https://cairosvg.org) (version 2.2.1)
   - [Pillow (PIL)](https://pillow.readthedocs.io/en/stable/)
   - [Pandas](https://pandas.pydata.org)
   - [Matplotlib](https://matplotlib.org)
