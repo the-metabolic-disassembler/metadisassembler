@@ -18,7 +18,7 @@ Command Line Usage
 .. code:: bash
 
    % metadisassembler -h
-   usage: metadisassembler [-h] [-t TIME] [--hide] [-c] [-p] query
+   usage: metadisassembler [-h] [-t TIME] [--hide] [-c] query
 
    positional arguments:
      query                 MDL_Molfile, SMILES, InChI, KEGG_COMPOUND_ID,
