@@ -359,7 +359,7 @@ class Compound:
 
     def _set_coordinates(self):
         """
-        obtains molblock from self.mol, extracts 2D coordinates from the molblock, and sets them to self.graph.node.
+        obtains molblock from self.mol, extracts 2D coordinates from the molblock, and sets them to self.graph.nodes.
         Before using this method:
         - 2D coordinates must be calculated by AllChem.Compute2DCoords(self.mol) or _compute_2d_coords(self)
         - self._input_molblock() must be called to prepare self.graph[node]["row"] in advance.
@@ -369,10 +369,10 @@ class Compound:
 
         for i in range(4, 4 + self.n_atoms):
             line = l_molblock[i].split()
-            if i - 4 in self.graph.node.keys():
-                self.graph.node[i - 4]["row"][0] = line[0]
-                self.graph.node[i - 4]["row"][1] = line[1]
-                self.graph.node[i - 4]["row"][2] = line[2]
+            if i - 4 in self.graph.nodes.keys():
+                self.graph.nodes[i - 4]["row"][0] = line[0]
+                self.graph.nodes[i - 4]["row"][1] = line[1]
+                self.graph.nodes[i - 4]["row"][2] = line[2]
 
         return True
 

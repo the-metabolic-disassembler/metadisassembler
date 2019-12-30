@@ -9,12 +9,12 @@ with open("README.rst") as f:
 def main():
     setup(
         name="metadisassembler",
-        version="0.0.7",
+        version="0.1.0",
         url="https://github.com/the-metabolic-disassembler/metadisassembler",
         author="Kohei Amano",
         author_email="amanok2167@gmail.com",
         maintainer="Masaaki Kotera",
-        maintainer_email="maskot@chemsys.t.u-tokyo.ac.jp",
+        maintainer_email="maskot1977@gmail.com",
         description="The Metabolic Disassembler",
         long_description=long_desc,
         license="MIT",
